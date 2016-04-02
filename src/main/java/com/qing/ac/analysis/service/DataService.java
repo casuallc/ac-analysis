@@ -12,12 +12,12 @@ import com.qing.ac.analysis.model.UP;
 import com.qing.ac.analysis.model.Video;
 
 public class DataService {
-	public static final String SQL_URL = "CREATE TABLE URL(URL VARCHAR(100), STATUS INT)";
+	public static final String SQL_URL = "CREATE TABLE URL(URL VARCHAR(100), STATUS INT, INDEX INDEX_UR_URL(url))";
 	public static final String SQL_VIDEO = "CREATE TABLE VIDEO(URL VARCHAR(100), UID VARCHAR(50), TITLE VARCHAR(200), PUBLIC_TIME VARCHAR(100), INTRO TEXT)";
-	public static final String SQL_URL_REQUESTED = "CREATE TABLE URL_REQUESTED(URL VARCHAR(100), STATUS INT)";
-	public static final String SQL_UP = "CREATE TABLE UP(URL VARCHAR(100), UID VARCHAR(15), STATUS INT, NICK VARCHAR(100), REGISTE_TIME VARCHAR(100), SEX VARCHAR(4), ADDRESS VARCHAR(100), QQ CHAR(14), LOVES VARCHAR(10), IMG VARCHAR(100), POSTS INT, FOLLOWERS INT, FOLLOWING INT)";
+	public static final String SQL_URL_REQUESTED = "CREATE TABLE URL_REQUESTED(URL VARCHAR(100), STATUS INT, INDEX INDEX_URL_REQUESTED_URL(url))";
+	public static final String SQL_UP = "CREATE TABLE UP(URL VARCHAR(100), UID VARCHAR(15), STATUS INT, NICK VARCHAR(100), REGISTE_TIME VARCHAR(100), SEX VARCHAR(4), ADDRESS VARCHAR(100), QQ CHAR(14), LOVES VARCHAR(10), IMG VARCHAR(100), POSTS INT, FOLLOWERS INT, FOLLOWING INT, PRIMARY KEY KEY_UP_UID(uid))";
 	
-	boolean createTable() {
+	public boolean createTable() {
 		try {
 			if(openConnection()) {
 				Statement stmt = conn.createStatement();
@@ -39,9 +39,13 @@ public class DataService {
 	
 	private Connection conn = null;
 	public static final String DRIVER = "com.mysql.jdbc.Driver";
-	public static final String URL = "jdbc:mysql://localhost:3306/ac";
-	public static final String USER = "root";
-	public static final String PASSWORD = "root";
+	public static final String URL = "jdbc:mysql://120.55.181.102:3306/ac";
+	public static final String USER = "qlooker";
+	public static String PASSWORD = "DB#mysql315";
+	
+//	public static final String URL = "jdbc:mysql://localhost:3306/ac";
+//	public static final String USER = "root";
+//	public static String PASSWORD = "root";
 	
 	public boolean openConnection() {
 		try {

@@ -2,22 +2,25 @@ package com.qing.ac.analysis.service;
 
 import java.util.Random;
 
-import org.apache.http.Header;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 public class HttpService {
 	private HttpClient httpClient = HttpClients.createSystem();
 	
+	private RequestConfig config = RequestConfig.custom().setConnectTimeout(5000).setSocketTimeout(10000).build();
+	
 	public HttpService() {
 		init();
 	}
 	
 	private void init() {
+		
 	}
 	
 	public static String USER_AGENT[] = {
@@ -35,7 +38,7 @@ public class HttpService {
 	
 	private Random random = new Random(System.currentTimeMillis());
 	
-	void setHeader(HttpRequest request) {
+	void setHeader(HttpRequestBase request) {
 //		request.setHeader("Host", "log.aixifan.com");
 		request.setHeader("User-Agent", USER_AGENT[random.nextInt(USER_AGENT.length)]);
 		request.setHeader("Accept", ACCEPT);
@@ -49,6 +52,7 @@ public class HttpService {
 	public Response requset(Request request) throws Exception {
 //		host = request.getUrl().substring(0, request.getUrl().length()-2).replace("http://", "").trim();
 		HttpGet get = new HttpGet(request.getUrl());
+		get.setConfig(config);
 		setHeader(get);
 //		for(Header h : get.getAllHeaders()) {
 //			System.out.println(h.getName() + ": " + h.getValue());

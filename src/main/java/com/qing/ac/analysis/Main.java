@@ -37,6 +37,7 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 			Main main = new Main();
+//			DataService.PASSWORD = args[0].trim();
 			main.init();
 			main.run();
 		} catch (Exception e) {
@@ -64,7 +65,7 @@ public class Main {
 	void run() throws Exception {
 		System.out.println("start");
 		// 请求数据
-		new Thread(() -> {
+//		new Thread(() -> {
 			Executor executor = Executors.newFixedThreadPool(THREAD_SIZE);
 			while(true) {
 				final Request request = requestQueue.poll();
@@ -96,7 +97,9 @@ public class Main {
 					amountOfDealingUrl ++;
 					if(amountOfDealingUrl >= LIMITS_OF_DEALINGURL) {
 						try {
+							System.out.println(request.getUrl() + " : waiting");
 							condition.await();
+							System.out.println(request.getUrl() + " : doing");
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -108,7 +111,7 @@ public class Main {
 				} finally {
 					lock.unlock();
 				}
-//				System.out.println(request.getUrl() + " : dealing");
+				System.out.println(request.getUrl() + " : dealing");
 				
 				executor.execute(() -> {
 					Response response = null;
@@ -138,7 +141,8 @@ public class Main {
 						amountOfDealingUrl --;
 						if(amountOfDealingUrl < LIMITS_OF_DEALINGURL) {
 							try {
-								condition.signal();
+								condition.signalAll();
+								System.out.println(request.getUrl() + " : done " + amountOfDealingUrl + " : " + requestQueue.size());
 							} catch (Exception e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
@@ -152,12 +156,12 @@ public class Main {
 					}
 				});
 			}
-		}).start();
+//		}).start();
 	}
 	
 	void init() {
 		String domain = "http://www.acfun.tv";
-		
+//		dataService.createTable();
 		dataService.deleteData();
 		
 		addRequest(new Request("http://www.acfun.tv"));
@@ -170,7 +174,7 @@ public class Main {
 			if(url == null || url.equals(""))
 				return true;
 			
-			if(!url.startsWith(domain+"/v/"))
+			if(!url.startsWith(domain))
 				return true;
 			
 			return false;

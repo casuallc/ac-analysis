@@ -30,7 +30,7 @@ public class MainTest extends TestCase {
 		main.addTemplate(new VideoTemplate())
 		.addTemplate(urlTemplate);
 		
-		main.run();
-		Thread.sleep(10000);
+//		main.run();
+//		Thread.sleep(10000);
 	}
 }
