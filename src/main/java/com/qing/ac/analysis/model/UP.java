@@ -1,5 +1,10 @@
 package com.qing.ac.analysis.model;
 
+/**
+ * @author liuchangqing
+ * @time 2016年4月2日下午4:23:59
+ * @function
+ */
 public class UP {
 
 	private String uid;
@@ -10,6 +15,54 @@ public class UP {
 
 	private long posts;
 	private long followers;
+	private long following;
+
+	private String qq;
+
+	private String sex;
+	private String loves;
+
+	private String img;
+
+	public void setLoves(String loves) {
+		this.loves = loves;
+	}
+
+	public String getLoves() {
+		return loves;
+	}
+
+	public void setImg(String img) {
+		this.img = img;
+	}
+
+	public String getImg() {
+		return img;
+	}
+
+	public void setSex(String sex) {
+		this.sex = sex;
+	}
+
+	public String getSex() {
+		return sex;
+	}
+
+	public long getFollowing() {
+		return following;
+	}
+
+	public void setFollowing(long following) {
+		this.following = following;
+	}
+
+	public String getQQ() {
+		return qq;
+	}
+
+	public void setQQ(String qq) {
+		this.qq = qq;
+	}
 
 	public String getUid() {
 		return uid;

@@ -13,9 +13,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import com.qing.ac.analysis.service.DataService;
+import com.qing.ac.analysis.service.HttpService;
 import com.qing.ac.analysis.service.Request;
 import com.qing.ac.analysis.service.Response;
 import com.qing.ac.analysis.template.Template;
+import com.qing.ac.analysis.template.UPTemplate;
 import com.qing.ac.analysis.template.URLTemplate;
 import com.qing.ac.analysis.template.VideoTemplate;
 
@@ -55,11 +57,15 @@ public class Main {
 	
 	private int amountOfDealingUrl = 0;
 	
+	private final static int LIMITS_OF_DEALINGURL = 10;
+	
+	private final static int THREAD_SIZE = 10;
+	
 	void run() throws Exception {
 		System.out.println("start");
 		// 请求数据
 		new Thread(() -> {
-			Executor executor = Executors.newFixedThreadPool(10);
+			Executor executor = Executors.newFixedThreadPool(THREAD_SIZE);
 			while(true) {
 				final Request request = requestQueue.poll();
 				if(request == null) {
@@ -72,7 +78,7 @@ public class Main {
 					continue;
 				}
 				
-				if(dataService.checkRequested(request) != 0) {
+				if(dataService.checkRequested(request) > 0) {
 					continue;
 				}
 				
@@ -85,18 +91,24 @@ public class Main {
 				}
 				
 				// 更新当前处理的请求数
-				lock.lock();
-				amountOfDealingUrl ++;
-				if(amountOfDealingUrl >= 10) {
-					try {
-						condition.await();
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+				try {
+					lock.lock();
+					amountOfDealingUrl ++;
+					if(amountOfDealingUrl >= LIMITS_OF_DEALINGURL) {
+						try {
+							condition.await();
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
+				} catch(Exception e4) {
+					// TODO Auto-generated catch block
+					e4.printStackTrace();
+				} finally {
+					lock.unlock();
 				}
-				lock.unlock();
-				System.out.println(request.getUrl() + " : dealing");
+//				System.out.println(request.getUrl() + " : dealing");
 				
 				executor.execute(() -> {
 					Response response = null;
@@ -118,28 +130,38 @@ public class Main {
 							// TODO
 						}
 					}
-					lock.lock();
-					amountOfDealingUrl --;
-					if(amountOfDealingUrl < 10) {
-						try {
-							condition.signalAll();
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+					try {
+						// 数据分析完毕，更新请求记录
+						
+						// 
+						lock.lock();
+						amountOfDealingUrl --;
+						if(amountOfDealingUrl < LIMITS_OF_DEALINGURL) {
+							try {
+								condition.signal();
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 						}
+					} catch (Exception e3) {
+						// TODO: handle exception
+						e3.printStackTrace();
+					} finally {
+						lock.unlock();
 					}
-					lock.unlock();
 				});
 			}
 		}).start();
-		System.out.println("end");
 	}
 	
 	void init() {
 		String domain = "http://www.acfun.tv";
 		
+		dataService.deleteData();
+		
 		addRequest(new Request("http://www.acfun.tv"));
-//		.addRequest(new Request("http://www.acfun.tv/v/ac488387?from-baifendian"))
+//		.addRequest(new Request("http://www.acfun.tv/v/ac488387?from-baifendian"));
 //		.addRequest(new Request("http://www.acfun.tv/v/ac1826245?from-baifendian"))
 //		.addRequest(new Request("http://www.acfun.tv/v/ac1841389?from-baifendian"));
 		
@@ -154,7 +176,8 @@ public class Main {
 			return false;
 		});
 		addTemplate(new VideoTemplate())
-		.addTemplate(urlTemplate);
+		.addTemplate(urlTemplate)
+		.addTemplate(new UPTemplate());
 	}
 	
 	public Main addRequest(Request request) {

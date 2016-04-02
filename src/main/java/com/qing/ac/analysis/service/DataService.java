@@ -15,6 +15,7 @@ public class DataService {
 	public static final String SQL_URL = "CREATE TABLE URL(URL VARCHAR(100), STATUS INT)";
 	public static final String SQL_VIDEO = "CREATE TABLE VIDEO(URL VARCHAR(100), UID VARCHAR(50), TITLE VARCHAR(200), PUBLIC_TIME VARCHAR(100), INTRO TEXT)";
 	public static final String SQL_URL_REQUESTED = "CREATE TABLE URL_REQUESTED(URL VARCHAR(100), STATUS INT)";
+	public static final String SQL_UP = "CREATE TABLE UP(URL VARCHAR(100), UID VARCHAR(15), STATUS INT, NICK VARCHAR(100), REGISTE_TIME VARCHAR(100), SEX VARCHAR(4), ADDRESS VARCHAR(100), QQ CHAR(14), LOVES VARCHAR(10), IMG VARCHAR(100), POSTS INT, FOLLOWERS INT, FOLLOWING INT)";
 	
 	boolean createTable() {
 		try {
@@ -22,6 +23,8 @@ public class DataService {
 				Statement stmt = conn.createStatement();
 				stmt.execute(SQL_URL);
 				stmt.execute(SQL_VIDEO);
+				stmt.execute(SQL_URL_REQUESTED);
+				stmt.execute(SQL_UP);
 				stmt.close();
 				conn.close();
 			}
@@ -50,13 +53,19 @@ public class DataService {
 		return true;
 	}
 
-	public int isRequested(String url) throws Exception {
-		return 0;
-	}
-	
+	/**
+	 * 更新处理过的url信息
+	 * @param req
+	 * @throws Exception
+	 */
 	public void saveRequestedURL(Request req) throws Exception {
 		if(openConnection()) {
 			PreparedStatement pstmt = conn.prepareStatement("INSERT INTO URL_REQUESTED(url, status) VALUES(?, '-1')");
+			pstmt.setString(1, req.getUrl());
+			pstmt.executeUpdate();
+			pstmt.close();
+			
+			pstmt = conn.prepareStatement("UPDATE URL SET STATUS = '1' WHERE URL = ?");
 			pstmt.setString(1, req.getUrl());
 			pstmt.executeUpdate();
 			pstmt.close();
@@ -64,6 +73,11 @@ public class DataService {
 		}
 	}
 	
+	/**
+	 * 保存分析出的video信息
+	 * @param video
+	 * @throws Exception
+	 */
 	public void saveVideo(Video video) throws Exception {
 		if(openConnection()) {
 			PreparedStatement pstmt = conn.prepareStatement("INSERT INTO VIDEO(URL, UID, TITLE, PUBLIC_TIME, INTRO) VALUES(?, ?, ?, ?, ?)");
@@ -78,10 +92,37 @@ public class DataService {
 		}
 	}
 	
-	public void saveUP(UP up) {
-		
+	/**
+	 * 保存UP信息
+	 * @param up
+	 * @throws Exception
+	 */
+	public void saveUP(UP up) throws Exception {
+		if(openConnection()) {
+			PreparedStatement pstmt = conn.prepareStatement("INSERT INTO UP(URL, UID, NICK, REGISTE_TIME, SEX, ADDRESS, QQ, POSTS, FOLLOWERS, FOLLOWING, LOVES, IMG) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+			pstmt.setString(1, up.getUrl());
+			pstmt.setString(2, up.getUid());
+			pstmt.setString(3, up.getNick());
+			pstmt.setString(4, up.getRegistTime());
+			pstmt.setString(5, up.getSex());
+			pstmt.setString(6, up.getAddress());
+			pstmt.setString(7, up.getQQ());
+			pstmt.setLong(8, up.getPosts());
+			pstmt.setLong(9, up.getFollowers());
+			pstmt.setLong(10, up.getFollowing());
+			pstmt.setString(11, up.getLoves());
+			pstmt.setString(12, up.getImg());
+			pstmt.executeUpdate();
+			pstmt.close();
+			conn.close();
+		}
 	}
 	
+	/**
+	 * 保存分析出的url地址
+	 * @param urlList
+	 * @throws Exception
+	 */
 	public void saveURL(List<String> urlList) throws Exception {
 		if(openConnection()) {
 			PreparedStatement pstmt = conn.prepareStatement("INSERT INTO URL(url, status) VALUES(?, '-1')");
@@ -95,10 +136,15 @@ public class DataService {
 		}
 	}
 	
+	/**
+	 * 查询出出100条待请求的url
+	 * @param requestQueue
+	 * @throws Exception
+	 */
 	public void listUrl(Queue<Request> requestQueue) throws Exception {
 		if(openConnection()) {
 			Statement stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT URL FROM URL WHERE STATUS = '-1'");
+			ResultSet rs = stmt.executeQuery("SELECT URL FROM URL WHERE STATUS = '-1' LIMIT 0, 100");
 			while(rs.next()) {
 				Request req = new Request(rs.getString("URL"));
 				requestQueue.add(req);
@@ -109,6 +155,11 @@ public class DataService {
 		}
 	}
 	
+	/**
+	 * 查询该url是否已处理过
+	 * @param req
+	 * @return
+	 */
 	public int checkRequested(Request req) {
 		try {
 			if(!openConnection()) {
@@ -129,5 +180,21 @@ public class DataService {
 			e.printStackTrace();
 		}
 		return -1;
+	}
+	
+	public void deleteData() {
+		try {
+			if(openConnection()) {
+				Statement stmt = conn.createStatement();
+				stmt.execute("DELETE FROM URL");
+				stmt.execute("DELETE FROM URL_REQUESTED");
+				stmt.execute("DELETE FROM UP");
+				stmt.execute("DELETE FROM VIDEO");
+				stmt.close();
+				conn.close();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
