@@ -7,13 +7,29 @@ public class Video {
 	private String intro;
 	private String publishTime;
 	private String catalog;
-
 	private long views;
 	private long comments;
 	private long bananas;
 	private long collections;
-
+	private long danmu;
+	private long yb;
 	private String uid;
+
+	public long getDanmu() {
+		return danmu;
+	}
+
+	public void setDanmu(long danmu) {
+		this.danmu = danmu;
+	}
+
+	public long getYb() {
+		return yb;
+	}
+
+	public void setYb(long yb) {
+		this.yb = yb;
+	}
 
 	public String getUrl() {
 		return url;

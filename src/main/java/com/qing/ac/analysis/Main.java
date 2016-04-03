@@ -68,6 +68,7 @@ public class Main {
 //		new Thread(() -> {
 			Executor executor = Executors.newFixedThreadPool(THREAD_SIZE);
 			while(true) {
+				System.out.println("start " + amountOfDealingUrl);
 				final Request request = requestQueue.poll();
 				if(request == null) {
 					try {
@@ -79,18 +80,25 @@ public class Main {
 					continue;
 				}
 				
+				// 此处有个隐藏bug，当该url已经被分析过后，要更新url的状态，否则积累一定次数后会造成死循环
 				if(dataService.checkRequested(request) > 0) {
+					try {
+						dataService.saveRequestedURL(request, true);
+					} catch (Exception e3) {
+						// TODO: handle exception
+						e3.printStackTrace();
+					}
 					continue;
 				}
 				
 				// 请求前保存请求的URL地址，防止重复请求
 				try {
-					dataService.saveRequestedURL(request);
+					dataService.saveRequestedURL(request, false);
 				} catch (Exception e3) {
 					// TODO: handle exception
 					e3.printStackTrace();
 				}
-				
+				System.out.println(request.getUrl());
 				// 更新当前处理的请求数
 				try {
 					lock.lock();
@@ -99,7 +107,6 @@ public class Main {
 						try {
 							System.out.println(request.getUrl() + " : waiting");
 							condition.await();
-							System.out.println(request.getUrl() + " : doing");
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -124,25 +131,34 @@ public class Main {
 						return;
 					}
 					
-					Document doc = Jsoup.parse(response.getContent());
-					for(Template template : templateList) {
-						try {
-							template.deal(response, doc);
-						} catch (Exception e2) {
-							e2.printStackTrace();
-							// TODO
-						}
-					}
+					Document doc = null;
 					try {
-						// 数据分析完毕，更新请求记录
-						
+						doc = Jsoup.parse(response.getFile(), "UTF-8");
+						boolean hasTemplate = false;
+						for(Template template : templateList) {
+							try {
+								if(template.deal(response, doc))
+									hasTemplate = true;
+							} catch (Exception e2) {
+								e2.printStackTrace();
+								// TODO
+							}
+						}
+						// 分析完成
+						dataService.updateRequestedUrl(hasTemplate, request);
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					
+					try {
 						// 
 						lock.lock();
 						amountOfDealingUrl --;
 						if(amountOfDealingUrl < LIMITS_OF_DEALINGURL) {
 							try {
 								condition.signalAll();
-								System.out.println(request.getUrl() + " : done " + amountOfDealingUrl + " : " + requestQueue.size());
+								System.out.println(request.getUrl() + " : done " + amountOfDealingUrl + " =: " + requestQueue.size());
 							} catch (Exception e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
@@ -161,23 +177,26 @@ public class Main {
 	
 	void init() {
 		String domain = "http://www.acfun.tv";
+		final String urlKey[] = {"acfun", 
+				"bilibili"};
 //		dataService.createTable();
-		dataService.deleteData();
+//		dataService.deleteData();
 		
-		addRequest(new Request("http://www.acfun.tv"));
+//		addRequest(new Request("http://www.acfun.tv"));
+		addRequest(new Request("http://www.bilibili.com/video/av4237821/"));
 //		.addRequest(new Request("http://www.acfun.tv/v/ac488387?from-baifendian"));
 //		.addRequest(new Request("http://www.acfun.tv/v/ac1826245?from-baifendian"))
 //		.addRequest(new Request("http://www.acfun.tv/v/ac1841389?from-baifendian"));
 		
 		URLTemplate urlTemplate = new URLTemplate(domain);
 		urlTemplate.addURLFilter((url) -> {
-			if(url == null || url.equals(""))
-				return true;
 			
-			if(!url.startsWith(domain))
-				return true;
+			for(String keyword : urlKey) {
+				if(url.contains(keyword))
+					return false;
+			}
 			
-			return false;
+			return true;
 		});
 		addTemplate(new VideoTemplate())
 		.addTemplate(urlTemplate)

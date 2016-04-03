@@ -9,7 +9,6 @@ public class Request {
 	}
 	
 	public String getUrl() {
-		url.trim();
 		return url;
 	}
 	

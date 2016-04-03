@@ -1,5 +1,7 @@
 package com.qing.ac.analysis.service;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Random;
 
 import org.apache.http.HttpResponse;
@@ -9,6 +11,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+
+import com.qing.utils.WebUtils;
 
 public class HttpService {
 	private HttpClient httpClient = HttpClients.createSystem();
@@ -51,7 +55,9 @@ public class HttpService {
 
 	public Response requset(Request request) throws Exception {
 //		host = request.getUrl().substring(0, request.getUrl().length()-2).replace("http://", "").trim();
-		HttpGet get = new HttpGet(request.getUrl());
+		
+		Thread.sleep(5000 + random.nextInt(5000));
+		HttpGet get = new HttpGet(WebUtils.delBlank(WebUtils.encodeUrl(request.getUrl())));
 		get.setConfig(config);
 		setHeader(get);
 //		for(Header h : get.getAllHeaders()) {
@@ -60,8 +66,12 @@ public class HttpService {
 		HttpResponse response = httpClient.execute(get);
 
 		Response result = new Response();
-		result.setContent(EntityUtils.toString(response.getEntity(), "UTF-8"));
+		File tempFile = File.createTempFile("temp"+random.nextInt(1000), ".tmp");
+		response.getEntity().writeTo(new FileOutputStream(tempFile));
+		result.setFile(tempFile);
+//		result.setContent(EntityUtils.toString(response.getEntity(), "UTF-8"));
 		result.setUrl(request.getUrl());
+		
 		return result;
 	}
 }

@@ -6,5 +6,5 @@ import com.qing.ac.analysis.service.Response;
 
 public abstract class Template {
 
-	public abstract void deal(Response response, Document doc) throws Exception;
+	public abstract boolean deal(Response response, Document doc) throws Exception;
 }

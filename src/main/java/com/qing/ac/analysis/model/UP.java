@@ -12,17 +12,22 @@ public class UP {
 	private String registTime;
 	private String url;
 	private String address;
-
 	private long posts;
 	private long followers;
 	private long following;
-
 	private String qq;
-
 	private String sex;
 	private String loves;
-
 	private String img;
+	private String intro;
+
+	public void setIntro(String intro) {
+		this.intro = intro;
+	}
+
+	public String getIntro() {
+		return intro;
+	}
 
 	public void setLoves(String loves) {
 		this.loves = loves;

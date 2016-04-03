@@ -28,7 +28,7 @@ public class URLTemplate extends Template {
 	}
 
 	@Override
-	public void deal(Response response, Document doc) throws Exception {
+	public boolean deal(Response response, Document doc) throws Exception {
 		// 获取A标签中的url
 		Elements eles = doc.getElementsByTag("a");
 		List<String> urlList = new ArrayList<>();
@@ -45,6 +45,8 @@ public class URLTemplate extends Template {
 		});
 		
 		dataService.saveURL(urlList);
+		
+		return true;
 	}
 
 	/**
