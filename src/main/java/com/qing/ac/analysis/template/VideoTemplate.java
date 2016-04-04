@@ -1,5 +1,6 @@
 package com.qing.ac.analysis.template;
 
+import org.jsoup.helper.StringUtil;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
@@ -41,7 +42,10 @@ public class VideoTemplate extends Template {
 	
 	boolean saveBVideo(Video video, Document doc) throws Exception {
 		try {
-			Element info = doc.getElementsByClass("info").first();
+//			if(video.getUrl().equals("http://www.bilibili.com/video/av4237821/")) {
+//				System.out.println("===");
+//			}
+			Element info = doc.getElementsByClass("info").get(1);
 			video.setTitle(info.getElementsByClass("v-title").first().child(0).attr("title"));
 			video.setPublishTime(info.getElementsByTag("time").first().child(0).text());
 			video.setViews(formatToNum(info.getElementById("dianji").text()));
@@ -50,7 +54,8 @@ public class VideoTemplate extends Template {
 			video.setCollections(formatToNum(info.getElementById("stow_count").text()));
 			
 			Element upinfo = doc.getElementsByClass("upinfo").first();
-			video.setUid(upinfo.child(1).getElementsByTag("tag").last().attr("mid"));
+			video.setUid(upinfo.child(1).getElementsByTag("a").last().attr("mid"));
+			video.setIntro(doc.getElementById("v_desc").text());
 			dataService.saveBVideo(video);
 			
 			// 保存up信息
@@ -63,7 +68,7 @@ public class VideoTemplate extends Template {
 			up.setIntro(upinfo.getElementsByClass("sign").text());
 			Element up_video_message = upinfo.getElementsByClass("up-video-message").first();
 			String posts = up_video_message.child(0).text();
-			up.setFollowers(Long.valueOf(posts.substring(posts.indexOf("：")+1)));
+			up.setPosts(Long.valueOf(posts.substring(posts.indexOf("：")+1)));
 			String followers = up_video_message.child(1).text();
 			up.setFollowers(Long.valueOf(followers.substring(followers.indexOf("：")+1)));
 			up.setImg(upinfo.getElementById("r-info-rank").child(0).child(0).attr("src"));
@@ -78,6 +83,9 @@ public class VideoTemplate extends Template {
 	
 	long formatToNum(String str) {
 		str = str.trim();
+		if(StringUtil.isBlank(str))
+			return -1;
+		
 		long result = 0;
 		if(str.contains("万"))
 			result = Long.valueOf(str.replace("万", "")) * 10000;

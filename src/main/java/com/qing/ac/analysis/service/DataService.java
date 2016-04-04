@@ -1,5 +1,6 @@
 package com.qing.ac.analysis.service;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -10,6 +11,7 @@ import java.util.Queue;
 
 import com.qing.ac.analysis.model.UP;
 import com.qing.ac.analysis.model.Video;
+import com.qing.utils.FileUtils;
 
 public class DataService {
 	public static final String SQL_URL = "CREATE TABLE URL(URL VARCHAR(255), STATUS INT, INDEX INDEX_UR_URL(url))";
@@ -25,7 +27,8 @@ public class DataService {
 	public static final String SQL_B_VIDEO = "CREATE TABLE B_VIDEO (URL VARCHAR(255), TITLE VARCHAR(200), PUBLISH_TIME VARCHAR(100), UID VARCHAR(50), VIEWS INT, DANMU INT, YB INT, COLLECTIONS INT, INTRO TEXT)";
 	public boolean createTable() {
 		try {
-			if(openConnection()) {
+			Connection conn = openConnection();
+			if(conn != null) {
 				Statement stmt = conn.createStatement();
 				stmt.execute(SQL_URL);
 				stmt.execute(SQL_VIDEO);
@@ -43,26 +46,24 @@ public class DataService {
 		return true;
 	}
 	
-	
-	
-	private Connection conn = null;
 	public static final String DRIVER = "com.mysql.jdbc.Driver";
-//	public static final String URL = "jdbc:mysql://120.55.181.102:3306/ac";
-//	public static final String USER = "qlooker";
-//	public static String PASSWORD = "DB#mysql315";
+	public static final String URL = "";
+	public static final String USER = "";
+	public static String PASSWORD = "";
 	
-	public static final String URL = "jdbc:mysql://localhost:3306/ac";
-	public static final String USER = "root";
-	public static String PASSWORD = "root";
+//	public static final String URL = "jdbc:mysql://localhost:3306/ac";
+//	public static final String USER = "root";
+//	public static String PASSWORD = "root";
 	
-	public boolean openConnection() {
+	public Connection openConnection() {
+		Connection conn = null;
 		try {
 			Class.forName(DRIVER);
 			conn = DriverManager.getConnection(URL, USER, PASSWORD);
 		} catch (Exception e) {
-			return false;
+			return null;
 		}
-		return true;
+		return conn;
 	}
 
 	/**
@@ -71,9 +72,9 @@ public class DataService {
 	 * @throws Exception
 	 */
 	public void saveRequestedURL(Request req, boolean hasRequested) throws Exception {
-		if(openConnection()) {
+		Connection conn = openConnection();
+		if(conn != null) {
 			try {
-				conn.setAutoCommit(false);
 				PreparedStatement pstmt = null;
 				if(!hasRequested) {
 					pstmt = conn.prepareStatement("INSERT INTO URL_REQUESTED(url, status) VALUES(?, '-1')");
@@ -82,14 +83,13 @@ public class DataService {
 					pstmt.close();
 				}
 				
-				pstmt = conn.prepareStatement("INSERT INTO URL_OLD (URL, STATUS) SELECT URL, '1' FROM URL WHERE URL = ?");
+				pstmt = conn.prepareStatement("DELETE FROM URL WHERE URL = ?");
 				pstmt.setString(1, req.getUrl());
 				pstmt.executeUpdate();
 				pstmt.close();
-				conn.commit();
 			} catch (Exception e) {
 				System.out.println("saveRequestedURL error " + req.getUrl());
-				conn.rollback();
+				e.printStackTrace();
 			} finally {
 				conn.close();
 			}
@@ -103,7 +103,8 @@ public class DataService {
 	 * @throws Exception
 	 */
 	public void saveVideo(Video video) throws Exception {
-		if(openConnection()) {
+		Connection conn = openConnection();
+		if(conn != null) {
 			try {
 				PreparedStatement pstmt = conn.prepareStatement("INSERT INTO VIDEO(URL, UID, TITLE, PUBLIC_TIME, INTRO) VALUES(?, ?, ?, ?, ?)");
 				pstmt.setString(1, video.getUrl());
@@ -125,7 +126,8 @@ public class DataService {
 	 * @throws Exception
 	 */
 	public void saveUP(UP up) throws Exception {
-		if(openConnection()) {
+		Connection conn = openConnection();
+		if(conn != null) {
 			try {
 				PreparedStatement pstmt = conn.prepareStatement("REPLACE INTO UP(URL, UID, NICK, REGISTE_TIME, SEX, ADDRESS, QQ, POSTS, FOLLOWERS, FOLLOWING, LOVES, IMG) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				pstmt.setString(1, up.getUrl());
@@ -154,9 +156,10 @@ public class DataService {
 	 * @throws Exception
 	 */
 	public void saveBVideo(Video video) throws Exception {
-		if(openConnection()) {
+		Connection conn = openConnection();
+		if(conn != null) {
 			try {
-				PreparedStatement pstmt = conn.prepareStatement("INSERT INTO B_VIDEO(URL, UID, TITLE, PUBLIC_TIME, INTRO, VIEWS, DANMU, YB, COLLECTIONS) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+				PreparedStatement pstmt = conn.prepareStatement("INSERT INTO B_VIDEO(URL, UID, TITLE, PUBLISH_TIME, INTRO, VIEWS, DANMU, YB, COLLECTIONS) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				pstmt.setString(1, video.getUrl());
 				pstmt.setString(2, video.getUid());
 				pstmt.setString(3, video.getTitle());
@@ -180,9 +183,10 @@ public class DataService {
 	 * @throws Exception
 	 */
 	public void saveBUP(UP up) throws Exception {
-		if(openConnection()) {
+		Connection conn = openConnection();
+		if(conn != null) {
 			try {
-				PreparedStatement pstmt = conn.prepareStatement("REPLACE INTO UP(URL, UID, NICK, REGISTE_TIME, SEX, ADDRESS, POSTS, FOLLOWERS, FOLLOWING, IMG) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+				PreparedStatement pstmt = conn.prepareStatement("REPLACE INTO B_UP(URL, UID, NICK, REGISTE_TIME, SEX, ADDRESS, POSTS, FOLLOWERS, FOLLOWING, IMG) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 				pstmt.setString(1, up.getUrl());
 				pstmt.setString(2, up.getUid());
 				pstmt.setString(3, up.getNick());
@@ -207,7 +211,8 @@ public class DataService {
 	 * @throws Exception
 	 */
 	public void saveURL(List<String> urlList) throws Exception {
-		if(openConnection()) {
+		Connection conn = openConnection();
+		if(conn != null) {
 			try {
 				conn.setAutoCommit(false);
 				PreparedStatement pstmt = conn.prepareStatement("INSERT INTO URL(url, status) VALUES(?, '-1')");
@@ -230,10 +235,11 @@ public class DataService {
 	 * @throws Exception
 	 */
 	public void listUrl(Queue<Request> requestQueue) throws Exception {
-		if(openConnection()) {
+		Connection conn = openConnection();
+		if(conn != null) {
 			try {
 				Statement stmt = conn.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT URL FROM URL WHERE STATUS = '-1' LIMIT 0, 100");
+				ResultSet rs = stmt.executeQuery("SELECT URL FROM URL WHERE STATUS = '-1' and url like '%bilibili%' LIMIT 0, 100");
 				while(rs.next()) {
 					Request req = new Request(rs.getString("URL"));
 					requestQueue.add(req);
@@ -253,19 +259,19 @@ public class DataService {
 	 */
 	public int checkRequested(Request req) {
 		try {
-			if(!openConnection()) {
-				return -1;
-			}
-			try {
-				Statement stmt = conn.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT COUNT(1) CNT FROM URL_REQUESTED WHERE URL = '"+req.getUrl()+"'");
-				rs.next();
-				int r = rs.getInt("CNT");
-				rs.close();
-				stmt.close();
-				return r;
-			} finally {
-				conn.close();
+			Connection conn = openConnection();
+			if(conn != null) {
+				try {
+					Statement stmt = conn.createStatement();
+					ResultSet rs = stmt.executeQuery("SELECT COUNT(1) CNT FROM URL_REQUESTED WHERE URL = '"+req.getUrl()+"'");
+					rs.next();
+					int r = rs.getInt("CNT");
+					rs.close();
+					stmt.close();
+					return r;
+				} finally {
+					conn.close();
+				}
 			}
 			
 		} catch (Exception e) {
@@ -282,7 +288,8 @@ public class DataService {
 	 */
 	public void updateRequestedUrl(boolean hasTemplate, Request request) {
 		try {
-			if(openConnection()) {
+			Connection conn = openConnection();
+			if(conn != null) {
 				try {
 					PreparedStatement pstmt = null;
 					int status = 1;
@@ -306,7 +313,8 @@ public class DataService {
 	
 	public void deleteData() {
 		try {
-			if(openConnection()) {
+			Connection conn = openConnection();
+			if(conn != null) {
 				try {
 					Statement stmt = conn.createStatement();
 					stmt.execute("DELETE FROM URL");
@@ -322,4 +330,15 @@ public class DataService {
 			e.printStackTrace();
 		}
 	}
+	/**
+	 * CREATE TABLE TMP SELECT * FROM URL WHERE 1 = 2;
+	 * INSERT INTO TMP (URL, STATUS) SELECT MAX(URL), MAX(STATUS) FROM URL GROUP BY URL;
+	 * DROP TABLE URL;
+	 * RENAME TABLE TMP TO URL;
+	 * 
+	 * CREATE TABLE TMP SELECT * FROM URL_REQUESTED WHERE 1 = 2;
+	 * INSERT INTO TMP (URL, STATUS) SELECT MAX(URL), MAX(STATUS) FROM URL_REQUESTED GROUP BY URL;
+	 * DROP TABLE URL_REQUESTED;
+	 * RENAME TABLE TMP TO URL_REQUESTED;
+	 */
 }

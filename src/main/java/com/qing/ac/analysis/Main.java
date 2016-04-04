@@ -122,17 +122,10 @@ public class Main {
 				
 				executor.execute(() -> {
 					Response response = null;
-					try {
-						response = httpService.requset(request);
-						
-					} catch (Exception e) {
-						e.printStackTrace();
-						// TODO
-						return;
-					}
 					
 					Document doc = null;
 					try {
+						response = httpService.requset(request);
 						doc = Jsoup.parse(response.getFile(), "UTF-8");
 						boolean hasTemplate = false;
 						for(Template template : templateList) {
@@ -183,7 +176,7 @@ public class Main {
 //		dataService.deleteData();
 		
 //		addRequest(new Request("http://www.acfun.tv"));
-		addRequest(new Request("http://www.bilibili.com/video/av4237821/"));
+//		addRequest(new Request("http://www.bilibili.com"));
 //		.addRequest(new Request("http://www.acfun.tv/v/ac488387?from-baifendian"));
 //		.addRequest(new Request("http://www.acfun.tv/v/ac1826245?from-baifendian"))
 //		.addRequest(new Request("http://www.acfun.tv/v/ac1841389?from-baifendian"));
