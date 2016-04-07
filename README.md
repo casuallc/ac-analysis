@@ -1,4 +1,4 @@
-## A站数据分析
+## A、B站数据分析
 
 ### 期望得到的结果
 ####获得视频信息
@@ -39,16 +39,17 @@ UP：<br>
 
 ### 类设计
 URL：<br>
-Vedio：<br>
-UP：<br>
+Vedio：视频信息<br>
+UP：投稿人信息<br>
 
 Request：<br>
+HttpService：处理http请求，返回结果保存到临时文件中等待后续分析，因java字符串长度限制，不能直接放到字符串对象中<br>
 Response：<br>
-Template：<br>
-TagTemplate：<br>
-VedioTemplate：<br>
-UPTemplate：<br>
+Template：解析模板，定义统一的解析方法。<br>
+URLTemplate：解析文件中的url<br>
+VedioTemplate：解析视频的模板<br>
+UPTemplate：解析投稿人<br>
 
-DataService：<br>
+DataService：保存和更新数据<br>
 
 Main：<br>
